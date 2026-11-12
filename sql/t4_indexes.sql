@@ -3,7 +3,7 @@
 -- copy of the database and measures plans, time and size before and after.
 --
 -- Prediction (commit before running), for each app query:
-A_profile:
+-- A_profile:
 --   plan before: SCAN ratings
 --   plan after: SEARCH ratings USING INDEX idx_ratings_user_time
 --
@@ -20,8 +20,6 @@ A_profile:
 --   plan after: SCAN ratings
 
 -- YOUR INDEXES HERE
-CREATE INDEX idx_ratings_user_time
-ON ratings(user_id, timestamp DESC);
 
 CREATE INDEX idx_ratings_timestamp
 ON ratings(timestamp);

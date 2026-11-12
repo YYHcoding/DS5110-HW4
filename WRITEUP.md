@@ -166,3 +166,77 @@ Consequently, intermediate running averages may differ substantially when multip
 However, the final running averages agree for all users because both methods eventually include every rating belonging to that user.
 
 This demonstrates that choosing the correct window frame is important when calculating cumulative statistics, especially when the ordering column contains duplicate values.
+
+## T4 — Indexing and Query Optimization
+
+### Prediction (Before Running)
+
+I initially selected two indexes: a composite index on `(user_id, timestamp DESC)` and an index on `timestamp`.
+
+I predicted that A_profile and C_recent would change from SCAN to SEARCH, B_movie_page would remain a SCAN, and D_month would remain a SCAN.
+
+### Index Selection and Revision
+
+My initial composite index improved A_profile performance but caused its results to differ from the pre-index results. The query orders only by `timestamp DESC`, so ratings sharing the same timestamp do not have a guaranteed relative order.
+
+Since the application queries in `run.py` must remain unchanged, I removed the composite index and retained only:
+
+`CREATE INDEX idx_ratings_timestamp ON ratings(timestamp);`
+
+This revised design passed all automated checks.
+
+### Actual Results
+
+| Query | Before (ms) | After (ms) | Speedup |
+|---|---:|---:|---:|
+| A_profile | 0.0378 | 0.0359 | 1.1x |
+| B_movie_page | 1.4922 | 1.4960 | 1.0x |
+| C_recent | 1.2344 | 0.0114 | 108.3x |
+| D_month | 10.0785 | 9.2914 | 1.1x |
+| D_rewrite | 1.8166 | 0.1234 | 14.7x |
+
+A_profile used the existing `sqlite_autoindex_ratings_1` index and a temporary B-tree for sorting both before and after indexing. B_movie_page remained a table SCAN.
+
+C_recent changed from SCAN to SEARCH using the timestamp covering index. D_month continued to use SCAN, although SQLite scanned the covering index after indexing.
+
+The revised experiment passed all result consistency checks.
+
+### Performance and Storage Trade-offs
+
+The database size increased from 3,629,056 bytes to 4,911,104 bytes, an increase of 1,282,048 bytes (approximately 35.3%). Index creation took 0.018 seconds.
+
+The timestamp index provided substantial improvements for time-based range queries while requiring less storage than the original two-index design.
+
+This experiment also demonstrated that improving query performance is not sufficient by itself. Query results must remain consistent, and non-deterministic ordering can complicate performance optimization.
+
+---
+
+## T4d — Monthly Query Rewrite
+
+### Prediction (Before Running)
+
+I predicted that D_month would remain a SCAN because it applies `strftime()` to the timestamp column, while the rewritten range query would use SEARCH with the timestamp index.
+
+### Method
+
+I replaced the month extraction condition with a half-open range on the original timestamp column:
+
+`timestamp >= ? AND timestamp < ?`
+
+The benchmark supplied the start of the selected month and the start of the following month.
+
+### Actual Results
+
+The original D_month query remained a SCAN, using the timestamp covering index after indexing. Its execution time changed from 10.0785 ms to 9.2914 ms.
+
+The rewritten D_rewrite query changed from SCAN to SEARCH using the timestamp covering index. Its execution time decreased from 1.8166 ms to 0.1234 ms, a 14.7x speedup.
+
+The rewritten query returned the same counts as the original monthly query, and all checks passed.
+
+### Explanation
+
+The original query applies `strftime()` to each timestamp, preventing a normal timestamp index from directly supporting the month filter as a range search.
+
+The rewritten query compares the raw timestamp against two boundaries, allowing SQLite to search the index for the matching range.
+
+This demonstrates that query structure, not just index availability, determines whether an index can be used efficiently.

@@ -75,8 +75,18 @@ I predict more than 63 rows, assuming at least one occupation has multiple movie
 
 ### Result
 
-(To be completed after running both queries.)
+The database contains 21 occupations. The ROW_NUMBER() query returned 27 rows, while the RANK() query returned 28 rows. Both queries passed the runner checks.
+
+My prediction of approximately 63 rows was too high because I assumed that every occupation would have at least three qualifying movies. In reality, 11 occupations had no qualifying movies, and two occupations (executive and technician) had fewer than three qualifying results.
+
+The RANK() query returned one additional row compared with ROW_NUMBER().
 
 ### Explanation
 
-(To be completed after running both queries.)
+I first grouped ratings by occupation and movie, calculated the number of ratings and the mean rating, and retained only groups with at least 20 ratings.
+
+ROW_NUMBER() assigned unique positions within each occupation using mean_rating DESC, movie_id ASC as a deterministic tie-breaker. This limited the result to at most three movies per occupation.
+
+RANK() assigned equal positions to movies with identical mean ratings. Therefore, filtering with pos <= 3 could preserve additional movies when ties occurred.
+
+The results demonstrate that ranking functions behave differently when ties are present. They also show that the number of qualifying groups must be considered before predicting the final row count.

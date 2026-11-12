@@ -103,21 +103,25 @@ I expect that many sessions may contain only one rating because users may submit
 
 ### Method
 
-I will use `LAG(timestamp)` to obtain each user's previous rating timestamp, ordered by `timestamp` and `movie_id`.
+I used `LAG(timestamp)` to obtain the previous rating timestamp for each user, ordered by `timestamp` and `movie_id`. A `CASE WHEN` expression marked the first rating and ratings following gaps greater than 1,800 seconds as new sessions.
 
-Next, I will use a `CASE WHEN` expression to mark the first rating and any rating occurring more than 1,800 seconds after the previous rating as the beginning of a new session.
-
-I will then calculate a running `SUM()` of the new-session flag using an explicit `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` frame to assign session numbers.
-
-Finally, I will group by `user_id` and `session_no` to calculate the number of ratings, session start time, and duration.
+I then used a running `SUM()` with an explicit `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` frame to assign session numbers. Finally, I grouped the records by `user_id` and `session_no` to calculate session-level statistics.
 
 ### Actual Result
 
-*To be completed after running the query.*
+The query identified **2,793 sessions**, with a median of **11 ratings per session** and a maximum of **737 ratings in one session**.
+
+A total of **562 users** had only one session, and the median number of sessions per user was **1**.
+
+The automated checks passed.
 
 ### Explanation
 
-*To be completed after comparing the prediction with the actual result.*
+My prediction of 1 rating per session was incorrect. The actual median was 11, suggesting that users frequently submitted multiple ratings within relatively short periods.
+
+The maximum of 737 ratings in one session further demonstrates that the 30-minute inactivity threshold can group many ratings into a single session.
+
+This exercise shows why assumptions about user activity patterns should be validated against actual timestamp data.
 
 ---
 
@@ -135,18 +139,30 @@ Therefore, the two running averages may differ when the same user has multiple r
 
 ### Method
 
-I will calculate two running averages using `AVG(rating) OVER`.
+I calculated two running averages using `AVG(rating) OVER`.
 
-For `run_default`, I will partition by `user_id` and order by `timestamp`, allowing SQLite to use its default window frame.
+The `run_default` calculation partitions by `user_id` and orders by `timestamp`, using SQLite's default window frame.
 
-For `run_rows`, I will partition by `user_id`, order by `timestamp` and `movie_id`, and explicitly specify `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`.
-
-I will compare the two results to determine whether tied timestamps cause differences.
+The `run_rows` calculation partitions by `user_id`, orders by `timestamp` and `movie_id`, and uses an explicit `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` frame.
 
 ### Actual Result
 
-*To be completed after running the query.*
+The two running averages disagreed on **49,787 rows**, approximately **49.8%** of the 100,000 ratings.
+
+There were **75,772 rows** sharing a timestamp with another rating from the same user. All **49,787 disagreeing rows** belonged to this group.
+
+The final running averages agreed for all **943 users**.
+
+The automated checks passed.
 
 ### Explanation
 
-*To be completed after comparing the prediction with the actual result.*
+My prediction of only a few disagreements was incorrect because identical timestamps were much more common than I expected.
+
+The default `RANGE` frame includes all rows sharing the same timestamp, while the explicit `ROWS` frame processes records one row at a time according to the specified ordering.
+
+Consequently, intermediate running averages may differ substantially when multiple ratings share a timestamp.
+
+However, the final running averages agree for all users because both methods eventually include every rating belonging to that user.
+
+This demonstrates that choosing the correct window frame is important when calculating cumulative statistics, especially when the ordering column contains duplicate values.

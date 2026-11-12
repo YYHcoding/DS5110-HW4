@@ -5,3 +5,36 @@
 -- Prediction (commit before running): which two steps of the chain disappear?
 
 -- YOUR QUERY HERE
+WITH movie_stats AS (
+    SELECT
+        movie_id,
+        AVG(rating) AS movie_mean
+    FROM ratings
+    GROUP BY movie_id
+    HAVING COUNT(*) >= 30
+),
+movie_genre AS (
+    SELECT
+        mg.genre_id,
+        s.movie_id,
+        s.movie_mean
+    FROM movie_stats AS s
+    JOIN movie_genres AS mg USING (movie_id)
+),
+with_genre_mean AS (
+    SELECT
+        genre_id,
+        movie_id,
+        movie_mean,
+        AVG(movie_mean) OVER (
+            PARTITION BY genre_id
+        ) AS genre_mean
+    FROM movie_genre
+)
+SELECT
+    genre_id,
+    movie_id,
+    movie_mean,
+    genre_mean
+FROM with_genre_mean
+WHERE movie_mean >= genre_mean + 0.5;

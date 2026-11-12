@@ -49,8 +49,14 @@ Both queries calculate the mean rating for movies with at least 30 ratings, then
 
 ### Result
 
-(To be completed after running both queries.)
+The original CTE query returned 269 rows, and the window-function rewrite also returned 269 rows. After sorting both result sets, the comparison returned True, confirming that the two queries produced identical results for this dataset.
 
 ### Explanation
 
-(To be completed after running both queries.)
+The original query uses a separate genre_means CTE with GROUP BY and then joins the genre averages back to individual movies.
+
+The rewritten query replaces this step with AVG(movie_mean) OVER (PARTITION BY genre_id), which calculates each genre's mean while preserving the movie-level rows.
+
+Both queries first restrict the data to movies with at least 30 ratings and then select movies whose mean rating is at least 0.5 higher than their genre mean.
+
+The window-function approach eliminates the separate genre aggregation and join while preserving the original calculation.

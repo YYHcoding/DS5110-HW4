@@ -25,8 +25,16 @@ For movies with at least 20 ratings, I predict that the share will also be below
 
 ### Result
 
-(To be completed after running the query.)
+The query returned an above_both_count of 45,232 and an above_both_share of 0.45232 (45.232%). For movies with at least 20 ratings, the share was approximately 0.46041 (46.041%).
+
+All three results were consistent with my prediction that the shares would be below 50%.
 
 ### Explanation
 
-(To be completed after running the query.)
+I used window functions to calculate the mean rating for each user, the mean rating for each movie, and the number of ratings per movie.
+
+A CASE WHEN expression identified ratings above both means. SUM() counted the qualifying ratings, while AVG() calculated their share.
+
+For movies with at least 20 ratings, I used conditional aggregation with NULL values to exclude movies with fewer ratings from the denominator.
+
+The share for movies with at least 20 ratings was slightly higher than the overall share, by approximately 0.81 percentage points.

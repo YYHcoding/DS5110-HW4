@@ -240,3 +240,16 @@ The original query applies `strftime()` to each timestamp, preventing a normal t
 The rewritten query compares the raw timestamp against two boundaries, allowing SQLite to search the index for the matching range.
 
 This demonstrates that query structure, not just index availability, determines whether an index can be used efficiently.
+The existing automatic index allowed A_profile to locate ratings for a particular user even before adding new indexes. However, it did not provide the required timestamp ordering, so SQLite used a temporary B-tree to sort the matching rows. This adds sorting work and potentially extra memory usage.
+
+Considering the monthly range rewrite strengthened the case for keeping the timestamp index. It benefits both C_recent and D_rewrite, so I retained it as the only additional index in the final design.
+
+## T5 — Recommendation
+
+I recommend adding one index on the ratings table's `timestamp` column and leaving out additional indexes for now. An index works like a book's index: it helps the database find relevant records without checking every row.
+
+Our experiment showed that this index reduced the average time for finding recent ratings from 1.2344 ms to 0.0114 ms, approximately 108 times faster. When we rewrote the monthly query to search between two timestamp boundaries, it became 14.7 times faster. However, the original monthly query still scanned the index because it applied a date function to every timestamp.
+
+I would not add a separate movie index because our experiment did not establish its benefit. I would also leave out the proposed user-and-timestamp index: although it accelerated profile queries, the automated test detected changed results, likely because ratings with identical timestamps could appear in different orders.
+
+The main trade-off is storage: the chosen index increased database size by approximately 35%. Indexes can also slow future data updates, so their benefits should justify their costs.

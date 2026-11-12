@@ -30,12 +30,13 @@ flagged AS (
     FROM rating_context
 )
 SELECT
-    SUM(above_both) AS above_both_count,
-    AVG(above_both * 1.0) AS above_both_share,
+    SUM(above_both) AS n_above_both,
+    COUNT(*) AS n_ratings,
+    AVG(above_both * 1.0) AS share_above_both,
     AVG(
         CASE
             WHEN movie_n >= 20 THEN above_both * 1.0
             ELSE NULL
         END
-    ) AS share_movies_20plus
+    ) AS share_above_both_20plus
 FROM flagged;

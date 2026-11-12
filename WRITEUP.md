@@ -25,7 +25,7 @@ For movies with at least 20 ratings, I predict that the share will also be below
 
 ### Result
 
-The query returned an above_both_count of 45,232 and an above_both_share of 0.45232 (45.232%). For movies with at least 20 ratings, the share was approximately 0.46041 (46.041%).
+The query returned an above_both_count of 45,232 and an above_both_share of 0.45232 (45.232%). For movies with at least 20 ratings, the share was approximately 0.46041 (46.041%).The total number of ratings was 100,000, and the query passed the T1 runner check after matching the required output column names.
 
 All three results were consistent with my prediction that the shares would be below 50%.
 

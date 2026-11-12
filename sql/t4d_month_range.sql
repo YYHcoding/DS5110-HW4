@@ -5,7 +5,11 @@
 -- run.py fills in the month boundaries and checks the counts match.
 -- Required: one column, the count.
 --
--- Prediction (commit before running): plan of D_month after your indexes ______;
--- plan of this rewrite ______.
+-- Prediction (commit before running): plan of D_month after your indexes SCAN ratings;
+-- plan of this rewrite SEARCH ratings USING COVERING INDEX idx_ratings_timestamp.
 
 -- YOUR QUERY HERE
+SELECT COUNT(*) AS n
+FROM ratings
+WHERE timestamp >= ?
+  AND timestamp < ?;

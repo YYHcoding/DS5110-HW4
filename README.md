@@ -34,3 +34,9 @@ Task 4 works on a copy in `output/`. Results go to `output/`, and
 Record here what you used an assistant for, and for what:
 
 - (your entries)
+## Use of AI assistants
+
+- Used ChatGPT to explain SQL window functions, ranking functions, window frames, query execution plans, and indexing concepts.
+- Used ChatGPT to help develop and review SQL queries, interpret benchmark results, and troubleshoot failed automated checks.
+- Used ChatGPT to assist with drafting and organizing explanations in `WRITEUP.md`.
+- Executed the SQL queries and Python validation scripts locally and reviewed the reported results.

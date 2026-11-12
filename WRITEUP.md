@@ -60,3 +60,23 @@ The rewritten query replaces this step with AVG(movie_mean) OVER (PARTITION BY g
 Both queries first restrict the data to movies with at least 30 ratings and then select movies whose mean rating is at least 0.5 higher than their genre mean.
 
 The window-function approach eliminates the separate genre aggregation and join while preserving the original calculation.
+## T2 — ROW_NUMBER vs. RANK
+
+### Prediction
+
+**Version 1 — ROW_NUMBER**
+
+I predict approximately 63 rows, assuming there are 21 occupations and each occupation has at least three qualifying movies. `ROW_NUMBER()` assigns a unique position to each movie, so each occupation can contribute at most three rows.
+For ROW_NUMBER(), I will order by mean_rating DESC, movie_id ASC to ensure deterministic results when movies have equal mean ratings.
+
+**Version 2 — RANK**
+
+I predict more than 63 rows, assuming at least one occupation has multiple movies tied at the third rank. Unlike `ROW_NUMBER()`, `RANK()` assigns the same position to movies with equal mean ratings, so filtering for `pos <= 3` can include more than three movies per occupation.
+
+### Result
+
+(To be completed after running both queries.)
+
+### Explanation
+
+(To be completed after running both queries.)

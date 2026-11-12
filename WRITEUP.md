@@ -38,3 +38,19 @@ A CASE WHEN expression identified ratings above both means. SUM() counted the qu
 For movies with at least 20 ratings, I used conditional aggregation with NULL values to exclude movies with fewer ratings from the denominator.
 
 The share for movies with at least 20 ratings was slightly higher than the overall share, by approximately 0.81 percentage points.
+
+## T1(c) — Window Function Rewrite
+
+### Prediction
+
+I predict that the window-function rewrite will return the same rows and values as the original CTE query.
+
+Both queries calculate the mean rating for movies with at least 30 ratings, then compare each movie's mean with the mean of qualifying movie means within its genre. The rewritten query uses `AVG(movie_mean) OVER (PARTITION BY genre_id)` instead of a separate grouped CTE and join.
+
+### Result
+
+(To be completed after running both queries.)
+
+### Explanation
+
+(To be completed after running both queries.)

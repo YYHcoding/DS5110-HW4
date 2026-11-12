@@ -6,6 +6,50 @@
 -- Suggested steps (one CTE each): gap with LAG; a 0/1 new_session flag;
 -- a running SUM of the flag with an explicit ROWS frame; GROUP BY.
 --
--- Prediction (commit before running): median ratings per session = ______.
+-- Prediction (commit before running): median ratings per session = 1.
 
 -- YOUR QUERY HERE
+WITH gaps AS (
+    SELECT
+        user_id,
+        movie_id,
+        timestamp,
+        LAG(timestamp) OVER (
+            PARTITION BY user_id
+            ORDER BY timestamp, movie_id
+        ) AS prev_ts
+    FROM ratings
+),
+
+flags AS (
+    SELECT
+        *,
+        CASE
+            WHEN prev_ts IS NULL THEN 1
+            WHEN timestamp - prev_ts > 1800 THEN 1
+            ELSE 0
+        END AS new_session
+    FROM gaps
+),
+
+numbered AS (
+    SELECT
+        *,
+        SUM(new_session) OVER (
+            PARTITION BY user_id
+            ORDER BY timestamp, movie_id
+            ROWS BETWEEN UNBOUNDED PRECEDING
+                 AND CURRENT ROW
+        ) AS session_no
+    FROM flags
+)
+
+SELECT
+    user_id,
+    session_no,
+    COUNT(*) AS n_ratings,
+    MIN(timestamp) AS start_ts,
+    MAX(timestamp) - MIN(timestamp) AS duration_s
+FROM numbered
+GROUP BY user_id, session_no
+ORDER BY user_id, session_no;

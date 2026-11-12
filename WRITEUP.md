@@ -90,3 +90,63 @@ ROW_NUMBER() assigned unique positions within each occupation using mean_rating 
 RANK() assigned equal positions to movies with identical mean ratings. Therefore, filtering with pos <= 3 could preserve additional movies when ties occurred.
 
 The results demonstrate that ranking functions behave differently when ties are present. They also show that the number of qualifying groups must be considered before predicting the final row count.
+
+## T3 — Rating Sessions
+
+### Prediction (Before Running)
+
+**Predicted median ratings per session: 1**
+
+I predict that the median number of ratings per session will be 1. A new session begins whenever the gap between two consecutive ratings by the same user exceeds 1,800 seconds (30 minutes).
+
+I expect that many sessions may contain only one rating because users may submit ratings at widely separated times. However, some sessions may contain multiple ratings submitted within a short period.
+
+### Method
+
+I will use `LAG(timestamp)` to obtain each user's previous rating timestamp, ordered by `timestamp` and `movie_id`.
+
+Next, I will use a `CASE WHEN` expression to mark the first rating and any rating occurring more than 1,800 seconds after the previous rating as the beginning of a new session.
+
+I will then calculate a running `SUM()` of the new-session flag using an explicit `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` frame to assign session numbers.
+
+Finally, I will group by `user_id` and `session_no` to calculate the number of ratings, session start time, and duration.
+
+### Actual Result
+
+*To be completed after running the query.*
+
+### Explanation
+
+*To be completed after comparing the prediction with the actual result.*
+
+---
+
+## T3b — Running Mean and Window Frames
+
+### Prediction (Before Running)
+
+**Predicted disagreement: A few rows**
+
+I predict that `run_default` and `run_rows` will disagree on a few rows.
+
+The default window frame uses `RANGE` semantics, which include all peer rows sharing the same timestamp within a user. In contrast, the explicit `ROWS` frame calculates the running average one row at a time, using `movie_id` as an additional ordering key.
+
+Therefore, the two running averages may differ when the same user has multiple ratings with identical timestamps. I expect such cases to occur occasionally, rather than in most rows.
+
+### Method
+
+I will calculate two running averages using `AVG(rating) OVER`.
+
+For `run_default`, I will partition by `user_id` and order by `timestamp`, allowing SQLite to use its default window frame.
+
+For `run_rows`, I will partition by `user_id`, order by `timestamp` and `movie_id`, and explicitly specify `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`.
+
+I will compare the two results to determine whether tied timestamps cause differences.
+
+### Actual Result
+
+*To be completed after running the query.*
+
+### Explanation
+
+*To be completed after comparing the prediction with the actual result.*
